@@ -1,35 +1,18 @@
 #!/usr/bin/env python
 
-import sys
-import cPickle as pkl
-import numpy as np
-from network import Network
+import network3
+from network3 import Network
+from network3 import ConvPoolLayer, FullyConnectedLayer, SoftmaxLayer
 
-from network import Network
-import mnist
+training_data, validation_data, test_data = network3.load_data_shared()
 
-if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print "USAGE: ", sys.argv[0], "<training_data.pkl> <test_data.pkl>"
-        exit(1)
+mini_batch_size = 10
 
-    traning_data_fn = sys.argv[1]
-    test_data_fn = sys.argv[2]
+net = Network([
+    ConvPoolLayer(image_shape = (mini_batch_size, 1, 28, 28), filter_shape = (20, 1, 5, 5), poolsize = (2, 2)),
+    FullyConnectedLayer(n_in = 20 * 12 * 12, n_out = 100),
+    SoftmaxLayer(n_in = 100, n_out = 10)
+    ], mini_batch_size)
 
-    print 'loading image data ...'
-    with open(traning_data_fn, 'rb') as fin:
-        image_arrays, image_labels = pkl.load(fin)
-    with open(test_data_fn, 'rb') as fin:
-        image_arrays_t, image_labels_t = pkl.load(fin)
-
-    training_data = [mnist.one_training_tuple(image_array, digit)
-            for image_array, digit in zip(image_arrays[:50000], image_labels[:50000])]
-    validation_data = [mnist.one_training_tuple(image_array, digit)
-            for image_array, digit in zip(image_arrays[50000:], image_labels[50000:])]
-    test_data = [mnist.one_training_tuple(image_array, digit)
-            for image_array, digit in zip(image_arrays_t, image_labels_t)]
-
-    print 'training ...'
-    net = Network([784, 30, 10])
-    net.SGD(training_data, 30, 10, 3.0, test_data = test_data)
+net.SGD(training_data, 60, mini_batch_size, 0.1, validation_data, test_data)
 
