@@ -1,21 +1,21 @@
 #!/usr/bin/env python
 
-import network3
-from network3 import Network
-from network3 import ConvPoolLayer, FullyConnectedLayer, SoftmaxLayer
-from network3 import ReLU
+import tensorflow as tf
+mnist = tf.keras.datasets.mnist
 
-training_data, validation_data, test_data = network3.load_data_shared()
+(x_train, y_train),(x_test, y_test) = mnist.load_data()
+x_train, x_test = x_train / 255.0, x_test / 255.0
 
-mini_batch_size = 10
+model = tf.keras.models.Sequential([
+  tf.keras.layers.Flatten(input_shape=(28, 28)),
+  tf.keras.layers.Dense(512, activation=tf.nn.relu),
+  tf.keras.layers.Dropout(0.2),
+  tf.keras.layers.Dense(10, activation=tf.nn.softmax)
+])
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
 
-net = Network([
-    ConvPoolLayer(image_shape = (mini_batch_size,  1, 28, 28), filter_shape = (20,  1, 5, 5), poolsize = (2, 2), activation_fn = ReLU),
-    ConvPoolLayer(image_shape = (mini_batch_size, 20, 12, 12), filter_shape = (40, 20, 5, 5), poolsize = (2, 2), activation_fn = ReLU),
-    FullyConnectedLayer(n_in = 40 * 4 * 4, n_out = 1000, activation_fn = ReLU, p_dropout = 0.5),
-    FullyConnectedLayer(n_in = 1000, n_out = 1000, activation_fn = ReLU, p_dropout = 0.5),
-    SoftmaxLayer(n_in = 1000, n_out = 10, p_dropout = 0.5)
-    ], mini_batch_size)
-
-net.SGD(training_data, 40, mini_batch_size, 0.1, validation_data, test_data)
+model.fit(x_train, y_train, epochs=30)
+model.evaluate(x_test, y_test)
 
